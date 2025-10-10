@@ -36,7 +36,7 @@ env:           # set this to the name of the container in the
   ECS_SERVICE: mainto-backend-service
   ECS_CLUSTER: mainto-cluster
   ECS_TASK_DEFINITION: .aws/backend-task-definition.json
-  CONTAINER_NAME: mainto-backend                                           # containerDefinitions section of your task definition
+  CONTAINER_NAME: mainto-backend-container                                         # containerDefinitions section of your task definition
 
 
 permissions:
