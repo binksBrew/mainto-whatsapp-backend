@@ -32,12 +32,6 @@ else:
 client = gspread.authorize(creds)
 sheet = None
 
-# Load JSON from environment variable injected by ECS
-service_account_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
-creds_info = json.loads(service_account_json)
-creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
-
-
 # Helpers
 def get_headers():
     return sheet.row_values(1)
