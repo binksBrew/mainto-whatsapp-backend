@@ -23,11 +23,10 @@ from app.auth import get_current_user
 from sqlalchemy.orm import Session
 from collections import defaultdict
 
-app = FastAPI()
-
 load_dotenv()  # ✅ Load env FIRST
 
 app = FastAPI()
+
 VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "myverifytoken123")
 
 origins = [
