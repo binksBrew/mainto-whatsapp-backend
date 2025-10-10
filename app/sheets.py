@@ -1,6 +1,8 @@
 import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime, date, timedelta
+import os
+import json
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -14,10 +16,26 @@ REQUIRED_COLUMNS = [
     "TransactionID", "ReceiptLink"
 ]
 
+
+if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
+    # 🔸 Running on AWS ECS (secret injected via environment variable)
+    print("[Sheets] Using GOOGLE_SERVICE_ACCOUNT_JSON from environment")
+    service_account_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
+    creds_info = json.loads(service_account_json)
+    creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+else:
+    # 🔸 Running locally (for debugging/development)
+    print("[Sheets] Using local service_account.json file")
+    creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
+
 # Initialize Google Sheets client
-creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
 client = gspread.authorize(creds)
 sheet = None
+
+# Load JSON from environment variable injected by ECS
+service_account_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
+creds_info = json.loads(service_account_json)
+creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
 
 
 # Helpers
