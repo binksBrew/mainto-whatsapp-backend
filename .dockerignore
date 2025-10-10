@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.Python
+venv/
+.env
+
+# Node/Vite
+node_modules/
+dist/
+build/
+
+# System
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Git
+.git
+.gitignore
+
+# Secrets
+service_account.json
+
+# Logs
+*.log

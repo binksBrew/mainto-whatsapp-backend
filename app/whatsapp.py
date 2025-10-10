@@ -13,7 +13,7 @@ if not ACCESS_TOKEN or not WHATSAPP_PHONE_ID:
 def extract_link_code(full_url: str) -> str:
     """
     Extract only the unique payment link code from Cashfree URL.
-    e.g. https://payments-test.cashfree.com/links/T99bf1pnncmg → T99bf1pnncmg
+    e.g. https://payments-CASHFREE_API_KEY.cashfree.com/links/T99bf1pnncmg → T99bf1pnncmg
     """
     if not full_url:
         return ""

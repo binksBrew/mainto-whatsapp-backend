@@ -4,10 +4,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
+
 # Load database URL from .env or default to local SQLite
 # DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
-DATABASE_URL = "postgresql+psycopg2://postgres:root@localhost:5432/whatsapp_mainto"
-
+DATABASE_URL=os.getenv("DATABASE_URL")
 
 # For SQLite you need connect_args
 connect_args = {}
