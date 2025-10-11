@@ -24,59 +24,142 @@
 #    See the documentation for each action used below for the recommended IAM policies for this IAM user,
 #    and best practices on handling the access key credentials.
 
+# name: Deploy to Amazon ECS
+
+# on:
+#   push:
+#     branches: [ "main" ]
+
+# env:           # set this to the name of the container in the
+#   AWS_REGION: us-east-1
+#   ECR_REPOSITORY: mainto-backend
+#   ECS_SERVICE: mainto-backend-service
+#   ECS_CLUSTER: mainto-cluster
+#   ECS_TASK_DEFINITION: .aws/backend-task-definition.json
+#   CONTAINER_NAME: mainto-backend-container                                         # containerDefinitions section of your task definition
+
+
+# permissions:
+#   contents: read
+
+# jobs:
+#   deploy:
+#     name: Deploy
+#     runs-on: ubuntu-latest
+#     environment: production
+
+#     steps:
+#     - name: Checkout
+#       uses: actions/checkout@v4
+
+#     - name: Configure AWS credentials
+#       uses: aws-actions/configure-aws-credentials@v1
+#       with:
+#         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#         aws-region: ${{ env.AWS_REGION }}
+
+#     - name: Login to Amazon ECR
+#       id: login-ecr
+#       uses: aws-actions/amazon-ecr-login@v1
+
+#     - name: Build, tag, and push image to Amazon ECR
+#       id: build-image
+#       env:
+#         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#         IMAGE_TAG: ${{ github.sha }}
+#       run: |
+#         # Build a docker container and
+#         # push it to ECR so that it can
+#         # be deployed to ECS.
+#         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+#         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+#         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+#     - name: Fill in the new image ID in the Amazon ECS task definition
+#       id: task-def
+#       uses: aws-actions/amazon-ecs-render-task-definition@v1
+#       with:
+#         task-definition: ${{ env.ECS_TASK_DEFINITION }}
+#         container-name: ${{ env.CONTAINER_NAME }}
+#         image: ${{ steps.build-image.outputs.image }}
+
+#     - name: Deploy Amazon ECS task definition
+#       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+#       with:
+#         task-definition: ${{ steps.task-def.outputs.task-definition }}
+#         service: ${{ env.ECS_SERVICE }}
+#         cluster: ${{ env.ECS_CLUSTER }}
+#         wait-for-service-stability: true
+
+#       env:
+#         DATABASE_URL: ${{ secrets.DATABASE_URL }}
+#         CASHFREE_APP_ID: ${{ secrets.CASHFREE_APP_ID }}
+#         CASHFREE_SECRET_KEY: ${{ secrets.CASHFREE_SECRET_KEY }}
+#         WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+#         WHATSAPP_PHONE_ID: ${{ secrets.WHATSAPP_PHONE_ID }}
+#         WHATSAPP_VERIFY_TOKEN: ${{ secrets.WHATSAPP_VERIFY_TOKEN }}
+#         ENV: ${{ secrets.ENV }}
+#         PLATFORM_FEE_PERCENT: ${{ secrets.PLATFORM_FEE_PERCENT }}
+#         JWT_SECRET: ${{ secrets.JWT_SECRET }}
+#         JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
+#         JWT_EXPIRES_MIN: ${{ secrets.JWT_EXPIRES_MIN }}  
+
+
+
+
 name: Deploy to Amazon ECS
 
 on:
   push:
     branches: [ "main" ]
 
-env:           # set this to the name of the container in the
+env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: mainto-backend
   ECS_SERVICE: mainto-backend-service
   ECS_CLUSTER: mainto-cluster
   ECS_TASK_DEFINITION: .aws/backend-task-definition.json
-  CONTAINER_NAME: mainto-backend-container                                         # containerDefinitions section of your task definition
-
+  CONTAINER_NAME: mainto-backend-container
 
 permissions:
   contents: read
 
 jobs:
   deploy:
-    name: Deploy
+    name: 🚀 Deploy to ECS
     runs-on: ubuntu-latest
     environment: production
 
     steps:
-    - name: Checkout
+    - name: 🧩 Checkout code
       uses: actions/checkout@v4
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    - name: ⚙️ Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Login to Amazon ECR
+    - name: 🔐 Login to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Build, tag, and push image to Amazon ECR
+    - name: 🏗️ Build, tag, and push image to Amazon ECR
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Build a docker container and
-        # push it to ECR so that it can
-        # be deployed to ECS.
+        echo "🔧 Building Docker image..."
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        echo "📦 Pushing image to ECR..."
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "✅ Image pushed successfully."
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-    - name: Fill in the new image ID in the Amazon ECS task definition
+    - name: 🧱 Fill in the new image ID in the Amazon ECS task definition
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
@@ -84,15 +167,18 @@ jobs:
         container-name: ${{ env.CONTAINER_NAME }}
         image: ${{ steps.build-image.outputs.image }}
 
-    - name: Deploy Amazon ECS task definition
+    - name: 🚀 Deploy Amazon ECS task definition
+      id: deploy-ecs
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: ${{ env.ECS_SERVICE }}
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true
+        wait-for-minutes: 10  # ⏱️ Shorter timeout than default (30 min)
 
       env:
+        # 🌍 All backend secrets passed into ECS environment
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
         CASHFREE_APP_ID: ${{ secrets.CASHFREE_APP_ID }}
         CASHFREE_SECRET_KEY: ${{ secrets.CASHFREE_SECRET_KEY }}
@@ -103,4 +189,14 @@ jobs:
         PLATFORM_FEE_PERCENT: ${{ secrets.PLATFORM_FEE_PERCENT }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
-        JWT_EXPIRES_MIN: ${{ secrets.JWT_EXPIRES_MIN }}  
+        JWT_EXPIRES_MIN: ${{ secrets.JWT_EXPIRES_MIN }}
+        GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}  # ✅ NEW ADDITION
+
+    - name: 🪵 Post-deployment status
+      if: failure()
+      run: |
+        echo "❌ ECS deployment failed or timed out."
+        echo "🔍 Check ECS service events here:"
+        echo "👉 https://console.aws.amazon.com/ecs/home?region=${{ env.AWS_REGION }}#/clusters/${{ env.ECS_CLUSTER }}/services/${{ env.ECS_SERVICE }}/events"
+        echo "🪵 View logs in CloudWatch:"
+        echo "👉 https://console.aws.amazon.com/cloudwatch/home?region=${{ env.AWS_REGION }}#logsV2:log-groups"
