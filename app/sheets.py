@@ -287,10 +287,13 @@ try:
     if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
         # ✅ Running on AWS ECS (secret injected via environment variable)
         print("[Sheets] Using GOOGLE_SERVICE_ACCOUNT_JSON from environment", flush=True)
-        service_account_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
+        raw_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
 
-        # Validate & load JSON
-        creds_info = json.loads(service_account_json)
+        # Convert escaped newlines (\\n) to real ones (\n)
+        raw_json = raw_json.replace("\\n", "\n")
+
+        # Parse JSON and initialize credentials
+        creds_info = json.loads(raw_json)
         creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
     else:
         # ✅ Running locally
