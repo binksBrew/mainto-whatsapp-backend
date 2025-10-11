@@ -285,27 +285,37 @@ REQUIRED_COLUMNS = [
 try:
     creds = None
 
+    # ✅ ECS or environment-based credentials
     if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_B64"):
-        # ✅ Running on AWS ECS (secret injected via environment variable)
-        print("[Sheets] Using GOOGLE_SERVICE_ACCOUNT_JSON from environment", flush=True)
-        raw_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_B64")
+        print("[Sheets] Using Google credentials from environment", flush=True)
 
-        # 🔹 If it's base64-encoded, decode it
-        if not raw_json.strip().startswith("{"):
+        # Pick whichever env var exists
+        raw_env_value = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_B64")
+
+        # 🧠 FIX 1: Handle empty or invalid secrets properly
+        if not raw_env_value or not raw_env_value.strip():
+            raise ValueError("Environment variable for Google credentials is empty!")
+
+        # 🧠 FIX 2: Handle base64-encoded secrets
+        if not raw_env_value.strip().startswith("{"):
             try:
-                raw_json = base64.b64decode(raw_json).decode("utf-8")
-                print("[Sheets] Decoded base64 Google credentials", flush=True)
+                decoded_bytes = base64.b64decode(raw_env_value)
+                raw_json = decoded_bytes.decode("utf-8")
+                print("[Sheets] ✅ Decoded base64 Google credentials", flush=True)
             except Exception as decode_err:
-                print(f"[Sheets] ⚠️ Base64 decoding failed: {decode_err}", flush=True)
+                raise ValueError(f"Failed to decode base64 Google credentials: {decode_err}")
+        else:
+            raw_json = raw_env_value
 
-        # 🔹 Replace escaped newlines if present
+        # Normalize newlines
         raw_json = raw_json.replace("\\n", "\n")
 
-        # 🔹 Parse JSON and initialize credentials
+        # Parse JSON and build credentials
         creds_info = json.loads(raw_json)
         creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+
     else:
-        # ✅ Running locally (use service_account.json)
+        # ✅ Local development mode
         print("[Sheets] Using local service_account.json file", flush=True)
         creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
 
@@ -317,7 +327,8 @@ try:
 except Exception as e:
     print(f"[Sheets] ❌ Failed to initialize Google Sheets: {str(e)}", file=sys.stderr, flush=True)
     sheet = None
-    raise  # Stop container startup if credentials fail
+    raise
+
 
 
 # ------------------ GOOGLE SHEETS AUTH SETUP ------------------
