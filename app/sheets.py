@@ -3,6 +3,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime, date, timedelta
 import os
 import json
+import sys
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
