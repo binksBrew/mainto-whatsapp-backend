@@ -17,25 +17,59 @@ REQUIRED_COLUMNS = [
 ]
 
 
-if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
-    # 🔸 Running on AWS ECS (secret injected via environment variable)
-    print("[Sheets] Using GOOGLE_SERVICE_ACCOUNT_JSON from environment")
-    service_account_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
-    creds_info = json.loads(service_account_json)
-    creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
-else:
-    # 🔸 Running locally (for debugging/development)
-    print("[Sheets] Using local service_account.json file")
-    creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
+# if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
+#     # 🔸 Running on AWS ECS (secret injected via environment variable)
+#     print("[Sheets] Using GOOGLE_SERVICE_ACCOUNT_JSON from environment")
+#     service_account_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
+#     creds_info = json.loads(service_account_json)
+#     creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+# else:
+#     # 🔸 Running locally (for debugging/development)
+#     print("[Sheets] Using local service_account.json file")
+#     creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
 
-# Initialize Google Sheets client
-client = gspread.authorize(creds)
-sheet = None
+# # Initialize Google Sheets client
+# client = gspread.authorize(creds)
+# sheet = None
 
-# Helpers
+# # Helpers
+# def get_headers():
+#     return sheet.row_values(1)
+
+# ------------------ CREDENTIALS SETUP ------------------
+try:
+    creds = None
+
+    if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
+        # 🔸 Running on AWS ECS (secret injected via environment variable)
+        print("[Sheets] Using GOOGLE_SERVICE_ACCOUNT_JSON from environment", flush=True)
+        service_account_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
+
+        # Ensure it's valid JSON before loading
+        creds_info = json.loads(service_account_json)
+        creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
+
+    else:
+        # 🔸 Running locally (for debugging/development)
+        print("[Sheets] Using local service_account.json file", flush=True)
+        creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
+
+    # Initialize Google Sheets client
+    client = gspread.authorize(creds)
+    sheet = None
+    print("[Sheets] ✅ Google Sheets connection initialized successfully", flush=True)
+
+except Exception as e:
+    print(f"[Sheets] ❌ Failed to initialize Google Sheets: {str(e)}", file=sys.stderr, flush=True)
+    raise  # Re-raise to stop container startup if credentials are broken
+
+
+# ------------------ HELPERS ------------------
 def get_headers():
+    """Return header row from the sheet"""
+    if not sheet:
+        raise ValueError("Sheet not initialized.")
     return sheet.row_values(1)
-
 
 # Get rows that should get reminders today
 def get_due_rows(default_daily_penalty: float = 0):
