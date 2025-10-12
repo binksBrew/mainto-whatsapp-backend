@@ -308,7 +308,10 @@ try:
             raw_json = raw_env_value
 
         # Normalize newlines
-        raw_json = raw_json.replace("\\n", "\n")
+        # Only normalize if the JSON still has literal backslash-n
+        if "\\n" in raw_json:
+            raw_json = raw_json.replace("\\n", "\n")
+
 
         # Parse JSON and build credentials
         creds_info = json.loads(raw_json)
