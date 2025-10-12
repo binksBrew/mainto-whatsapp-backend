@@ -282,56 +282,6 @@ REQUIRED_COLUMNS = [
 ]
 
 
-# try:
-#     creds = None
-
-#     # ✅ ECS or environment-based credentials
-#     if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_B64"):
-#         print("[Sheets] Using Google credentials from environment", flush=True)
-
-#         # Pick whichever env var exists
-#         raw_env_value = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_B64")
-
-#         # 🧠 FIX 1: Handle empty or invalid secrets properly
-#         if not raw_env_value or not raw_env_value.strip():
-#             raise ValueError("Environment variable for Google credentials is empty!")
-
-#         # 🧠 FIX 2: Handle base64-encoded secrets
-#         if not raw_env_value.strip().startswith("{"):
-#             try:
-#                 decoded_bytes = base64.b64decode(raw_env_value)
-#                 raw_json = decoded_bytes.decode("utf-8")
-#                 print("[Sheets] ✅ Decoded base64 Google credentials", flush=True)
-#             except Exception as decode_err:
-#                 raise ValueError(f"Failed to decode base64 Google credentials: {decode_err}")
-#         else:
-#             raw_json = raw_env_value
-
-#         # Normalize newlines
-#         # Only normalize if the JSON still has literal backslash-n
-#         if "\\n" in raw_json:
-#             raw_json = raw_json.replace("\\n", "\n")
-
-
-#         # Parse JSON and build credentials
-#         creds_info = json.loads(raw_json)
-#         creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
-
-#     else:
-#         # ✅ Local development mode
-#         print("[Sheets] Using local service_account.json file", flush=True)
-#         creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
-
-#     # ✅ Initialize Google Sheets client
-#     client = gspread.authorize(creds)
-#     sheet = None
-#     print("[Sheets] ✅ Google Sheets connection initialized successfully", flush=True)
-
-# except Exception as e:
-#     print(f"[Sheets] ❌ Failed to initialize Google Sheets: {str(e)}", file=sys.stderr, flush=True)
-#     sheet = None
-#     raise
-
 try:
     creds = None
     raw_env_value = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_B64")
@@ -350,21 +300,26 @@ try:
         else:
             raw_json = raw_env_value
 
-        # Step 2: Safely normalize newlines
+        # 🧠 Step 2: If the JSON has real newlines, escape them for safe parsing
+        if "-----BEGIN PRIVATE KEY-----" in raw_json and "\n" in raw_json:
+            raw_json = raw_json.replace("\n", "\\n")
+
+        # Step 3: Safely normalize escaped newlines
         if "\\n" in raw_json:
             raw_json = raw_json.replace("\\n", "\n")
 
-        # Step 3: Parse JSON
+        # Step 4: Parse JSON
         try:
             creds_info = json.loads(raw_json)
+            print("[Sheets] ✅ JSON parsed successfully", flush=True)
         except json.JSONDecodeError as e:
             print(f"[Sheets] ❌ JSON parse failed: {e}", flush=True)
             print("---- RAW SNIPPET ----")
-            print(raw_json[:300])  # prints a preview
+            print(raw_json[:300])
             print("---------------------")
             raise
 
-        # Step 4: Create credentials
+        # Step 5: Create credentials
         creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
 
     else:
@@ -380,38 +335,6 @@ except Exception as e:
     print(f"[Sheets] ❌ Failed to initialize Google Sheets: {e}", file=sys.stderr, flush=True)
     sheet = None
     raise
-
-
-# ------------------ GOOGLE SHEETS AUTH SETUP ------------------
-# try:
-#     creds = None
-
-#     if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
-#         # ✅ Running on AWS ECS (secret injected via environment variable)
-#         print("[Sheets] Using GOOGLE_SERVICE_ACCOUNT_JSON from environment", flush=True)
-#         raw_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
-
-#         # Convert escaped newlines (\\n) to real ones (\n)
-#         raw_json = raw_json.replace("\\n", "\n")
-
-#         # Parse JSON and initialize credentials
-#         creds_info = json.loads(raw_json)
-#         creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
-#     else:
-#         # ✅ Running locally
-#         print("[Sheets] Using local service_account.json file", flush=True)
-#         creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
-
-#     # Initialize Google Sheets client
-#     client = gspread.authorize(creds)
-#     sheet = None
-#     print("[Sheets] ✅ Google Sheets connection initialized successfully", flush=True)
-
-# except Exception as e:
-#     print(f"[Sheets] ❌ Failed to initialize Google Sheets: {str(e)}", file=sys.stderr, flush=True)
-#     sheet = None
-#     raise  # Stop container startup if credentials fail
-
 
 # ------------------ HELPERS ------------------
 def get_headers():
