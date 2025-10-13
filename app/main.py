@@ -29,21 +29,37 @@ app = FastAPI()
 
 VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "myverifytoken123")
 
+# origins = [
+#     "http://localhost:5173",         # for local dev
+#     "http://127.0.0.1:5173",         # alternate local # if you use a domain
+#     "http://3.237.193.244",
+#     "http://mainto.trinetraventures.com",
+#     "https://mainto.trinetraventures.com"
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,  # lock down later: ["http://localhost:5173"]
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 origins = [
-    "http://localhost:5173",         # for local dev
-    "http://127.0.0.1:5173",         # alternate local # if you use a domain
-    "http://3.237.193.244",
-    "http://mainto.trinetraventures.com",
-    "https://mainto.trinetraventures.com"
+    "http://localhost:5173",          # local dev
+    "http://127.0.0.1:5173",          # local alt
+    "http://3.237.193.244",           # EC2 public IP (if frontend connects directly)
+    "http://mainto.trinetraventures.com",  # frontend domain (HTTP)
+    "https://mainto.trinetraventures.com"  # frontend domain (HTTPS)
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # lock down later: ["http://localhost:5173"]
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 app.include_router(auth_router)
 
