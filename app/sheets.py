@@ -349,8 +349,14 @@ try:
 
         # ✅ Step 2: Decode any escaped characters like \n into real newlines
         # AWS Secrets Manager injects escaped characters, so convert them back
-        raw_json_fixed = raw_json.encode("utf-8").decode("unicode_escape")
-
+        # raw_json_fixed = raw_json.encode("utf-8").decode("unicode_escape")
+        if "\\n" in raw_json and not "\n" in raw_json.strip().splitlines()[0]:
+    # Already escaped correctly
+            raw_json_fixed = raw_json
+        else:
+    # Contains actual newlines, escape them for valid JSON
+            raw_json_fixed = raw_json.replace("\r", "").replace("\n", "\\n")
+            
         # Step 3: Parse the JSON
         try:
             creds_info = json.loads(raw_json_fixed)
