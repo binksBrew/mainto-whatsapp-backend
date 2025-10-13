@@ -281,7 +281,6 @@ REQUIRED_COLUMNS = [
     "TransactionID", "ReceiptLink"
 ]
 
-
 # try:
 #     creds = None
 #     raw_env_value = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_B64")
@@ -300,15 +299,10 @@ REQUIRED_COLUMNS = [
 #         else:
 #             raw_json = raw_env_value
 
-#         # 🧠 Step 2: If the JSON has real newlines, escape them for safe parsing
-#         if "-----BEGIN PRIVATE KEY-----" in raw_json and "\n" in raw_json:
-#             raw_json = raw_json.replace("\n", "\\n")
+#         # ✅ Step 2: Immediately escape any real newlines to make valid JSON
+#         raw_json = raw_json.replace("\r", "").replace("\n", "\\n")
 
-#         # Step 3: Safely normalize escaped newlines
-#         if "\\n" in raw_json:
-#             raw_json = raw_json.replace("\\n", "\n")
-
-#         # Step 4: Parse JSON
+#         # Step 3: Now parse the JSON
 #         try:
 #             creds_info = json.loads(raw_json)
 #             print("[Sheets] ✅ JSON parsed successfully", flush=True)
@@ -319,11 +313,10 @@ REQUIRED_COLUMNS = [
 #             print("---------------------")
 #             raise
 
-#         # Step 5: Create credentials
+#         # Step 4: Create credentials
 #         creds = Credentials.from_service_account_info(creds_info, scopes=SCOPES)
 
 #     else:
-#         # Local development fallback
 #         print("[Sheets] Using local service_account.json file", flush=True)
 #         creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
 
@@ -354,12 +347,13 @@ try:
         else:
             raw_json = raw_env_value
 
-        # ✅ Step 2: Immediately escape any real newlines to make valid JSON
-        raw_json = raw_json.replace("\r", "").replace("\n", "\\n")
+        # ✅ Step 2: Decode any escaped characters like \n into real newlines
+        # AWS Secrets Manager injects escaped characters, so convert them back
+        raw_json_fixed = raw_json.encode("utf-8").decode("unicode_escape")
 
-        # Step 3: Now parse the JSON
+        # Step 3: Parse the JSON
         try:
-            creds_info = json.loads(raw_json)
+            creds_info = json.loads(raw_json_fixed)
             print("[Sheets] ✅ JSON parsed successfully", flush=True)
         except json.JSONDecodeError as e:
             print(f"[Sheets] ❌ JSON parse failed: {e}", flush=True)
@@ -383,6 +377,7 @@ except Exception as e:
     print(f"[Sheets] ❌ Failed to initialize Google Sheets: {e}", file=sys.stderr, flush=True)
     sheet = None
     raise
+
 
 # ------------------ HELPERS ------------------
 def get_headers():
