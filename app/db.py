@@ -9,6 +9,8 @@ import os
 # DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 DATABASE_URL=os.getenv("DATABASE_URL")
 
+print(f"[DB DEBUG] DATABASE_URL = {os.getenv('DATABASE_URL')}")
+
 # For SQLite you need connect_args
 connect_args = {}
 if DATABASE_URL.startswith("sqlite"):
