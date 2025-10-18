@@ -47,9 +47,7 @@ VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "myverifytoken123")
 origins = [
     "http://localhost:5173",          # local dev
     "http://127.0.0.1:5173",          # local alt
-    "http://3.237.193.244",           # EC2 public IP (if frontend connects directly)
-    "http://mainto.trinetraventures.com",  # frontend domain (HTTP)
-    "https://mainto.trinetraventures.com"  # frontend domain (HTTPS)
+    "https://mainto.trinetraventures.com"  # production frontend
 ]
 
 app.add_middleware(
